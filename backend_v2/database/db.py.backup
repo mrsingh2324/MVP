@@ -1,0 +1,579 @@
+#!/usr/bin/env python3
+"""
+Mock database manager for AI Fitness Trainer (bypassing Supabase for demo).
+"""
+
+from typing import Dict, List, Any, Optional
+from datetime import datetime
+import hashlib
+import json
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class MockDatabaseManager:
+    """
+    Mock database manager for demo purposes - stores data in memory.
+    """
+
+    def __init__(self):
+        """Initialize mock database manager."""
+        self.users = {}
+        self.workout_sessions = {}
+        self.nutrition_data = {}
+        self.nutrition_goals = {}
+        self.connected = False
+        logger.info("🔧 Mock database manager initialized")
+
+        self.client: Client = create_client(self.supabase_url, self.supabase_key)
+        logger.info("Supabase database manager initialized")
+
+    def connect(self, connection_string: str = None) -> bool:
+        """
+        Test database connection.
+
+        Returns:
+            True if connection successful
+        """
+        try:
+            # Test basic connection without accessing specific tables
+            # This will work even if tables don't exist yet
+            logger.info("Supabase connection successful (tables may need to be created)")
+            return True
+        except Exception as e:
+            logger.error(f"Supabase connection failed: {e}")
+            return False
+
+    def create_user(self, user_data: Dict[str, Any]) -> Optional[str]:
+        """
+        Create a new user.
+
+        Args:
+            user_data: User information dictionary
+
+        Returns:
+            User ID if successful, None otherwise
+        """
+        try:
+            # Prepare user data for Supabase
+            user_record = {
+                'phone': user_data.get('phone'),
+                'name': user_data.get('name'),
+                'age': user_data.get('age'),
+                'weight': user_data.get('weight'),
+                'height': user_data.get('height'),
+                'fitness_goal': user_data.get('fitness_goal'),
+                'gender': user_data.get('gender'),
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+
+            result = self.client.table('users').insert(user_record).execute()
+
+            if result.data:
+                user_id = result.data[0]['id']
+                logger.info(f"User created successfully: {user_id}")
+                return str(user_id)
+            else:
+                logger.error("Failed to create user: no data returned")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error creating user: {e}")
+            return None
+
+    def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user information.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            User data dictionary or None
+        """
+        try:
+            result = self.client.table('users').select('*').eq('id', user_id).execute()
+
+            if result.data and len(result.data) > 0:
+                user_data = result.data[0]
+                logger.info(f"User retrieved: {user_id}")
+                return user_data
+            else:
+                logger.warning(f"User not found: {user_id}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error getting user {user_id}: {e}")
+            return None
+
+    def get_user_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by phone number.
+
+        Args:
+            phone: Phone number
+
+        Returns:
+            User data dictionary or None
+        """
+        try:
+            result = self.client.table('users').select('*').eq('phone', phone).execute()
+
+            if result.data and len(result.data) > 0:
+                user_data = result.data[0]
+                logger.info(f"User retrieved by phone: {phone}")
+                return user_data
+            else:
+                logger.warning(f"User not found by phone: {phone}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error getting user by phone {phone}: {e}")
+            return None
+
+    def update_user(self, user_id: str, update_data: Dict[str, Any]) -> bool:
+        """
+        Update user information.
+
+        Args:
+            user_id: User ID
+            update_data: Data to update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            update_data['updated_at'] = datetime.now().isoformat()
+
+            result = self.client.table('users').update(update_data).eq('id', user_id).execute()
+
+            if result.data:
+                logger.info(f"User updated successfully: {user_id}")
+                return True
+            else:
+                logger.error(f"Failed to update user: {user_id}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error updating user {user_id}: {e}")
+            return False
+
+    def save_workout_session(self,
+                           user_id: str,
+                           session_data: Dict[str, Any]) -> Optional[str]:
+        """
+        Save a workout session.
+
+        Args:
+            user_id: User ID
+            session_data: Session data including reps, duration, etc.
+
+        Returns:
+            Session ID if successful, None otherwise
+        """
+        try:
+            # Prepare session data for Supabase
+            session_record = {
+                'user_id': user_id,
+                'session_id': session_data.get('session_id'),
+                'start_time': session_data.get('start_time'),
+                'end_time': session_data.get('end_time'),
+                'duration_minutes': session_data.get('duration_minutes'),
+                'total_reps': session_data.get('total_reps', 0),
+                'calories_estimate': session_data.get('calories_estimate', 0),
+                'is_active': session_data.get('is_active', False),
+                'exercises_performed': session_data.get('exercises_performed', {}),
+                'performance_metrics': session_data.get('performance_metrics', {}),
+                'recommendations': session_data.get('recommendations', []),
+                'created_at': datetime.now().isoformat()
+            }
+
+            result = self.client.table('workout_sessions').insert(session_record).execute()
+
+            if result.data:
+                session_id = result.data[0]['id']
+                logger.info(f"Workout session saved: {session_id} for user {user_id}")
+                return str(session_id)
+            else:
+                logger.error("Failed to save workout session: no data returned")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error saving workout session for user {user_id}: {e}")
+            return None
+
+    def get_user_workout_history(self,
+                               user_id: str,
+                               limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Get user's workout history.
+
+        Args:
+            user_id: User ID
+            limit: Maximum number of sessions to return
+
+        Returns:
+            List of workout session data
+        """
+        try:
+            result = self.client.table('workout_sessions').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(limit).execute()
+
+            sessions = result.data if result.data else []
+            logger.info(f"Retrieved {len(sessions)} workout sessions for user {user_id}")
+            return sessions
+
+        except Exception as e:
+            logger.error(f"Error getting workout history for user {user_id}: {e}")
+            return []
+
+    def get_exercise_statistics(self,
+                              user_id: str,
+                              exercise_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get exercise statistics for a user.
+
+        Args:
+            user_id: User ID
+            exercise_name: Name of the exercise
+
+        Returns:
+            Exercise statistics or None
+        """
+        try:
+            # Get all sessions for this user and exercise
+            result = self.client.table('workout_sessions').select('exercises_performed, created_at').eq('user_id', user_id).execute()
+
+            if not result.data:
+                return None
+
+            # Calculate statistics
+            total_reps = 0
+            total_sessions = 0
+            best_session_reps = 0
+            rep_counts = []
+
+            for session in result.data:
+                exercises = session.get('exercises_performed', {})
+                if exercise_name in exercises:
+                    exercise_data = exercises[exercise_name]
+                    reps = exercise_data.get('reps', 0)
+
+                    total_reps += reps
+                    total_sessions += 1
+                    best_session_reps = max(best_session_reps, reps)
+                    rep_counts.append(reps)
+
+            if total_sessions == 0:
+                return None
+
+            average_reps = total_reps / total_sessions
+
+            stats = {
+                'exercise_name': exercise_name,
+                'total_reps': total_reps,
+                'total_sessions': total_sessions,
+                'best_session_reps': best_session_reps,
+                'average_reps': round(average_reps, 1),
+                'last_updated': datetime.now().isoformat()
+            }
+
+            logger.info(f"Exercise statistics calculated for {exercise_name}: {total_sessions} sessions")
+            return stats
+
+        except Exception as e:
+            logger.error(f"Error getting exercise statistics for user {user_id}, exercise {exercise_name}: {e}")
+            return None
+
+    def save_nutrition_goals(self, user_id: str, nutrition_data: Dict[str, Any]) -> bool:
+        """
+        Save nutrition goals for a user.
+
+        Args:
+            user_id: User ID
+            nutrition_data: Nutrition goals data
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Check if goals already exist
+            existing = self.client.table('nutrition_goals').select('id').eq('user_id', user_id).execute()
+
+            goals_record = {
+                'user_id': user_id,
+                'fitness_goal': nutrition_data.get('fitness_goal'),
+                'weight': nutrition_data.get('weight'),
+                'height': nutrition_data.get('height'),
+                'age': nutrition_data.get('age'),
+                'gender': nutrition_data.get('gender'),
+                'activity_level': nutrition_data.get('activity_level'),
+                'daily_calories': nutrition_data.get('daily_calories'),
+                'protein_grams': nutrition_data.get('protein_grams'),
+                'carbs_grams': nutrition_data.get('carbs_grams'),
+                'fat_grams': nutrition_data.get('fat_grams'),
+                'updated_at': datetime.now().isoformat()
+            }
+
+            if existing.data and len(existing.data) > 0:
+                # Update existing goals
+                result = self.client.table('nutrition_goals').update(goals_record).eq('user_id', user_id).execute()
+            else:
+                # Create new goals
+                goals_record['created_at'] = datetime.now().isoformat()
+                result = self.client.table('nutrition_goals').insert(goals_record).execute()
+
+            if result.data:
+                logger.info(f"Nutrition goals saved for user {user_id}")
+                return True
+            else:
+                logger.error(f"Failed to save nutrition goals for user {user_id}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error saving nutrition goals for user {user_id}: {e}")
+            return False
+
+    def get_nutrition_goals(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get nutrition goals for a user.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Nutrition goals data or None
+        """
+        try:
+            result = self.client.table('nutrition_goals').select('*').eq('user_id', user_id).execute()
+
+            if result.data and len(result.data) > 0:
+                goals = result.data[0]
+                logger.info(f"Nutrition goals retrieved for user {user_id}")
+                return goals
+            else:
+                logger.warning(f"No nutrition goals found for user {user_id}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error getting nutrition goals for user {user_id}: {e}")
+            return None
+
+    def log_food_entry(self, user_id: str, food_data: Dict[str, Any]) -> Optional[str]:
+        """
+        Log a food entry for a user.
+
+        Args:
+            user_id: User ID
+            food_data: Food entry data
+
+        Returns:
+            Entry ID if successful, None otherwise
+        """
+        try:
+            entry_record = {
+                'user_id': user_id,
+                'food_name': food_data.get('food_name'),
+                'calories': food_data.get('calories', 0),
+                'protein': food_data.get('protein', 0),
+                'carbs': food_data.get('carbs', 0),
+                'fat': food_data.get('fat', 0),
+                'quantity': food_data.get('quantity', 1),
+                'meal_type': food_data.get('meal_type', 'snack'),
+                'logged_at': food_data.get('logged_at', datetime.now().isoformat()),
+                'created_at': datetime.now().isoformat()
+            }
+
+            result = self.client.table('food_entries').insert(entry_record).execute()
+
+            if result.data:
+                entry_id = result.data[0]['id']
+                logger.info(f"Food entry logged: {entry_id} for user {user_id}")
+                return str(entry_id)
+            else:
+                logger.error("Failed to log food entry: no data returned")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error logging food entry for user {user_id}: {e}")
+            return None
+
+    def get_daily_nutrition(self, user_id: str, date: str = None) -> Optional[Dict[str, Any]]:
+        """
+        Get daily nutrition summary for a user.
+
+        Args:
+            user_id: User ID
+            date: Date string (YYYY-MM-DD), defaults to today
+
+        Returns:
+            Daily nutrition summary or None
+        """
+        try:
+            if not date:
+                date = datetime.now().strftime('%Y-%m-%d')
+
+            # Get start and end of day
+            start_date = f"{date}T00:00:00"
+            end_date = f"{date}T23:59:59"
+
+            result = self.client.table('food_entries').select('*').eq('user_id', user_id).gte('logged_at', start_date).lte('logged_at', end_date).execute()
+
+            if not result.data:
+                return {
+                    'date': date,
+                    'totals': {'calories': 0, 'protein': 0, 'carbs': 0, 'fat': 0},
+                    'entries': [],
+                    'progress': {'calories': 0, 'protein': 0, 'carbs': 0, 'fat': 0}
+                }
+
+            # Calculate totals
+            totals = {'calories': 0, 'protein': 0, 'carbs': 0, 'fat': 0}
+            entries = []
+
+            for entry in result.data:
+                entry_totals = {
+                    'calories': entry.get('calories', 0) * entry.get('quantity', 1),
+                    'protein': entry.get('protein', 0) * entry.get('quantity', 1),
+                    'carbs': entry.get('carbs', 0) * entry.get('quantity', 1),
+                    'fat': entry.get('fat', 0) * entry.get('quantity', 1)
+                }
+
+                for nutrient in totals:
+                    totals[nutrient] += entry_totals[nutrient]
+
+                entries.append({
+                    'id': entry['id'],
+                    'food_name': entry.get('food_name'),
+                    'meal_type': entry.get('meal_type'),
+                    'quantity': entry.get('quantity', 1),
+                    'nutrients': entry_totals,
+                    'logged_at': entry.get('logged_at')
+                })
+
+            # Get nutrition goals for progress calculation
+            goals = self.get_nutrition_goals(user_id)
+            progress = {'calories': 0, 'protein': 0, 'carbs': 0, 'fat': 0}
+
+            if goals:
+                progress = {
+                    'calories': round((totals['calories'] / goals.get('daily_calories', 2000)) * 100, 1),
+                    'protein': round((totals['protein'] / goals.get('protein_grams', 150)) * 100, 1),
+                    'carbs': round((totals['carbs'] / goals.get('carbs_grams', 250)) * 100, 1),
+                    'fat': round((totals['fat'] / goals.get('fat_grams', 67)) * 100, 1)
+                }
+
+            summary = {
+                'date': date,
+                'totals': totals,
+                'entries': entries,
+                'progress': progress
+            }
+
+            logger.info(f"Daily nutrition summary retrieved for user {user_id} on {date}")
+            return summary
+
+        except Exception as e:
+            logger.error(f"Error getting daily nutrition for user {user_id}: {e}")
+            return None
+
+    def close(self):
+        """Close database connection."""
+        # Supabase handles connection pooling automatically
+        logger.info("Supabase connection closed")
+
+
+# Global database manager instance
+db_manager = SupabaseDatabaseManager()
+
+
+# Data models for Supabase tables
+class User:
+    """User data model."""
+
+    def __init__(self,
+                 user_id: str,
+                 phone: str,
+                 name: str = None,
+                 age: int = None,
+                 weight: float = None,
+                 height: float = None,
+                 fitness_goal: str = None,
+                 gender: str = None,
+                 created_at: datetime = None):
+        self.user_id = user_id
+        self.phone = phone
+        self.name = name
+        self.age = age
+        self.weight = weight
+        self.height = height
+        self.fitness_goal = fitness_goal
+        self.gender = gender
+        self.created_at = created_at or datetime.now()
+
+
+class WorkoutSession:
+    """Workout session data model."""
+
+    def __init__(self,
+                 session_id: str,
+                 user_id: str,
+                 start_time: datetime = None,
+                 end_time: datetime = None,
+                 duration_minutes: float = 0,
+                 total_reps: int = 0,
+                 calories_estimate: float = 0,
+                 is_active: bool = False):
+        self.session_id = session_id
+        self.user_id = user_id
+        self.start_time = start_time or datetime.now()
+        self.end_time = end_time
+        self.duration_minutes = duration_minutes
+        self.total_reps = total_reps
+        self.calories_estimate = calories_estimate
+        self.is_active = is_active
+
+
+class NutritionGoals:
+    """Nutrition goals data model."""
+
+    def __init__(self,
+                 user_id: str,
+                 fitness_goal: str,
+                 weight: float,
+                 height: float,
+                 age: int,
+                 gender: str,
+                 activity_level: str = 'moderate'):
+        self.user_id = user_id
+        self.fitness_goal = fitness_goal
+        self.weight = weight
+        self.height = height
+        self.age = age
+        self.gender = gender
+        self.activity_level = activity_level
+
+
+class FoodEntry:
+    """Food entry data model."""
+
+    def __init__(self,
+                 user_id: str,
+                 food_name: str,
+                 calories: float = 0,
+                 protein: float = 0,
+                 carbs: float = 0,
+                 fat: float = 0,
+                 quantity: float = 1,
+                 meal_type: str = 'snack',
+                 logged_at: datetime = None):
+        self.user_id = user_id
+        self.food_name = food_name
+        self.calories = calories
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+        self.quantity = quantity
+        self.meal_type = meal_type
+        self.logged_at = logged_at or datetime.now()

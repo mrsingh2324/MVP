@@ -1,0 +1,70 @@
+{
+  "name": "exercise-detection-frontend",
+  "version": "2.0.0",
+  "description": "Modern React frontend for exercise detection with FastAPI backend",
+  "private": true,
+  "dependencies": {
+    "@headlessui/react": "^2.2.8",
+    "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-progress": "^1.0.3",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-toast": "^1.1.5",
+    "@react-three/drei": "^9.88.13",
+    "@react-three/fiber": "^8.15.19",
+    "@sentry/react": "^10.12.0",
+    "@sentry/tracing": "^7.120.4",
+    "@supabase/supabase-js": "^2.38.4",
+    "@tensorflow-models/pose-detection": "^2.1.0",
+    "@tensorflow/tfjs": "^4.15.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.15.0",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.6.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.18",
+    "gtag": "^1.0.1",
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-ga4": "^2.1.0",
+    "react-router-dom": "^6.20.1",
+    "react-scripts": "5.0.1",
+    "tailwind-merge": "^3.3.1",
+    "three": "^0.160.1",
+    "three-mesh-bvh": "^0.8.3",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8000"
+}

@@ -1,0 +1,120 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+*/node_modules/
+*/**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Environment variables
+# Global .env files
+.env
+.env.*
+!.env.example
+
+# Frontend environment files
+/frontend_v2/.env*
+/frontend_v2/*.env*
+
+# Backend environment files
+/backend_v2/.env*
+/backend_v2/*.env*
+
+# Common environment file patterns
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Build directories
+/frontend_v2/build/
+/backend_v2/build/
+
+# Local development
+.venv/
+venv/
+ENV/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+/coverage
+
+# Production
+/backend_v2/instance/
+
+# Media
+*.mp4
+*.mov
+*.avi
+*.wmv
+*.flv
+*.webm
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development
+*.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
